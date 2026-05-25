@@ -10,7 +10,6 @@ const allowedOrigins = [
   'http://localhost:5500',
   'http://127.0.0.1:5500',
   'http://localhost:3000',
-
 ].filter(Boolean);
 
 app.use(cors({
@@ -41,31 +40,9 @@ app.get('/api/debug', (req, res) => {
   });
 });
 
-app.use((err, req, res, next) => {  // error handler stays LAST
-  console.error(err.stack);
-  res.status(500).json({ message: err.message || 'Internal server error' });
-});
-
-app.get('/api/debug', (req, res) => {
-  res.json({
-    email: process.env.ADMIN_EMAIL,
-    pass: process.env.ADMIN_PASS,
-  });
-});
-
-app.use((err, req, res, next) => {  // error handler stays LAST
-  console.error(err.stack);
-  res.status(500).json({ message: err.message || 'Internal server error' });
-});
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: err.message || 'Internal server error' });
-});
-app.get('/api/debug', (req, res) => {
-  res.json({
-    email: process.env.ADMIN_EMAIL,
-    pass: process.env.ADMIN_PASS,
-  });
 });
 
 mongoose.connect(process.env.MONGO_URI)
