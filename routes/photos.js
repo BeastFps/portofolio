@@ -9,7 +9,7 @@ const { uploadToBunny, deleteFromBunny } = require('../utils/bunny');
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  limits: { fileSize: 40 * 1024 * 1024 }, // 20MB
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|webp|gif/;
     const ext = allowed.test(path.extname(file.originalname).toLowerCase());
