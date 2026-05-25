@@ -38,6 +38,9 @@ async function _request(method, path, body = null, isFormData = false) {
 }
 
 // ─── API object ──────────────────────────────────────────────────────────────
+
+
+
 const API = {
 
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -83,6 +86,12 @@ const API = {
   // projectId: _id string
   async deleteProject(projectId) {
     return _request('DELETE', '/api/projects/' + projectId);
+  },
+
+  uploadModel(projectId, file) {
+    const fd = new FormData();
+    fd.append('model', file);
+    return _request('POST', '/api/projects/' + projectId + '/model', fd, true);
   },
 
   // ── About ─────────────────────────────────────────────────────────────────
