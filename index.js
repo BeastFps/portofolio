@@ -2,13 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5500',
-  'http://127.0.0.1:5500',
-  'http://localhost:3000',
-  'https://beastfps.github.io',   // add this
-].filter(Boolean);
+
 const app = express();
 
 const allowedOrigins = [
@@ -16,6 +10,7 @@ const allowedOrigins = [
   'http://localhost:5500',
   'http://127.0.0.1:5500',
   'http://localhost:3000',
+  'https://beastfps.github.io',
 ].filter(Boolean);
 
 app.use(cors({
