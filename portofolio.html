@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -139,12 +141,12 @@ nav.scrolled{border-color:var(--border);background:rgba(10,9,6,.85);backdrop-fil
 .gallery-scroll-hint::before,.gallery-scroll-hint::after{content:'—'}
 .gallery-thumbs{display:flex;border-top:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
 .gallery-thumbs::-webkit-scrollbar{display:none}
-.gallery-thumb{flex:0 0 33%;aspect-ratio:16/6;position:relative;overflow:hidden;border-right:1px solid var(--border);cursor:pointer;transition:background .2s}
+.gallery-thumb{flex:0 0 50%;aspect-ratio:16/6;position:relative;overflow:hidden;border-right:1px solid var(--border);cursor:pointer;transition:background .2s}
 .gallery-thumb:last-child{border-right:none}
 .gallery-thumb img{width:100%;height:100%;object-fit:cover;display:block;opacity:.55;transition:opacity .25s}
 .gallery-thumb.active img,.gallery-thumb:hover img{opacity:1}
 .gallery-thumb.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--amber)}
-.gallery-thumb-empty{flex:0 0 33%;aspect-ratio:16/6;position:relative;overflow:hidden;border-right:1px solid var(--border);background:rgba(212,133,10,.018)}
+.gallery-thumb-empty{flex:0 0 50%;aspect-ratio:16/6;position:relative;overflow:hidden;border-right:1px solid var(--border);background:rgba(212,133,10,.018)}
 .gallery-thumb-empty:last-child{border-right:none}
 .gallery-thumb-num{position:absolute;top:.3rem;left:.4rem;font-family:var(--font-mono);font-size:.45rem;letter-spacing:.08em;color:rgba(212,133,10,.18)}
 
