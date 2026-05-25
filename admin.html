@@ -263,7 +263,7 @@ function buildNav() {
     const div = document.createElement('div');
     div.className = 'nav-item';
     div.id = 'nav-proj-' + i;
-    div.innerHTML = `<span class="dot" id="dot-proj-${i}"></span> ${escHtml(proj.name)}`;
+    div.innerHTML = `<span class="dot" id="dot-proj-${i}"></span> ${escHtml(proj.title)}`;
     div.addEventListener('click', () => showSection('proj-' + i));
     list.appendChild(div);
   });
@@ -280,7 +280,7 @@ function buildSections() {
 
     const title = document.createElement('div');
     title.className = 'section-title';
-    title.textContent = proj.name;
+    title.textContent = proj.title;
     sec.appendChild(title);
 
     // Gallery card
@@ -530,7 +530,7 @@ function renderProjectManager() {
   if (!el) return;
   el.innerHTML = PROJECTS.map((proj, i) => `
     <div class="info-row">
-      <span class="info-key">${i+1}. ${escHtml(proj.name)}</span>
+      <span class="info-key">${i+1}. ${escHtml(proj.title)}</span>
       <button data-id="${escHtml(proj._id)}" class="rm-proj-btn"
         style="background:none;border:1px solid #444;color:var(--text-dim);font-family:var(--mono);font-size:.6rem;padding:.2rem .5rem;border-radius:3px;cursor:pointer;">
         Remove
