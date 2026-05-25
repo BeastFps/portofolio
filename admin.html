@@ -316,10 +316,21 @@ function buildSections() {
     sec.appendChild(mcard);
     container.appendChild(sec);
 
-    document.getElementById('model-input-' + i).addEventListener('change', function() {
-      if (this.files[0])
-        document.getElementById('model-name-' + i).innerHTML = `<span class="tag">✓ ${this.files[0].name}</span>`;
-    });
+    document.getElementById('model-input-' + i).addEventListener('change', async function() {
+  if (!this.files[0]) return;
+  const file = this.files[0];
+  const projId = PROJECTS[i]._id;
+  document.getElementById('model-name-' + i).innerHTML = `<span class="tag">Uploading…</span>`;
+  try {
+    const result = await API.uploadModel(projId, file);
+    PROJECTS[i].modelUrl = result.modelUrl;
+    document.getElementById('model-name-' + i).innerHTML = `<span class="tag">✓ Saved</span>`;
+    showToast('Model saved ✓');
+  } catch(e) {
+    document.getElementById('model-name-' + i).innerHTML = `<span class="tag">✗ Failed</span>`;
+    showToast('Upload failed: ' + e.message);
+  }
+});
   });
 
   // Profile input
