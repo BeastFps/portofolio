@@ -56,12 +56,12 @@ const API = {
 
   // file: File object, category: 'profile-main' | 'proj-0-img-2' etc.
   // Returns: { _id, url, category }
-  async uploadPhoto(file, category) {
-    const fd = new FormData();
-    fd.append('image', file);
-    fd.append('category', category);
-    return _request('POST', '/api/photos', fd, true);
-  },
+ async uploadPhoto(file, category) {
+  const fd = new FormData();
+  fd.append('photo', file);        // must match multer: upload.single('photo')
+  fd.append('category', category);
+  return _request('POST', '/api/photos/upload', fd, true);  // correct URL
+},
 
   // photoId: the _id string from the photo object
   async deletePhoto(photoId) {
