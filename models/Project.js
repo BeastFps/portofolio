@@ -3,6 +3,7 @@ const projectSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, default: '' },
   fbxUrl: { type: String, default: '' },
+  modelUrl: { type: String, default: '' },  // add this
   thumbnailUrl: { type: String, default: '' },
   fileName: { type: String, default: '' },
   tags: [{ type: String }],

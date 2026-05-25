@@ -23,6 +23,30 @@ router.get('/', async (req, res) => {
 
 });
 // POST /api/projects — create a new project by name (admin only)
+// POST /api/projects/:id/model — upload FBX to Bunny + save URL
+router.post('/:id/model', auth, upload.single('model'), async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const fileName = `models/${uuidv4()}${ext}`;
+    const url = await uploadToBunny(req.file.buffer, fileName, 'application/octet-stream');
+
+    project.modelUrl = url;
+    project.fileName = fileName;
+    await project.save();
+
+    res.json({ modelUrl: url });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+
 router.post('/', auth, async (req, res) => {
   try {
     const { name } = req.body;
