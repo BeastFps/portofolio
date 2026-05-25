@@ -485,6 +485,17 @@ async function loadPortfolioData() {
       if (placeholder) placeholder.style.display = 'none';
     }
 
+    // ── Auto-load 3D models ────────────────────────────
+const projects = await API.getProjects();
+projects.forEach((proj, i) => {
+  if (!proj.modelUrl) return;
+  document.getElementById('loading-' + i).classList.add('active');
+  const v = initViewer(i);
+  new THREE.FBXLoader().load(proj.modelUrl, root => onModelLoaded(root, v, i, null), undefined, err => {
+    console.error(err);
+    document.getElementById('loading-' + i).classList.remove('active');
+  });
+});
     // ── Gallery images ─────────────────────────────────
     // 3 hardcoded projects × 4 slots each
     for (let i = 0; i < 3; i++) {
@@ -498,6 +509,23 @@ async function loadPortfolioData() {
     console.warn('[portfolio] Could not load data from backend:', e.message);
   }
 }
+
+// Auto-load FBX models
+const fbxModels = [
+  'https://sahilsom.b-cdn.net/military_Hat.fbx',  // project 0
+  null,  // project 1 — add URL when ready
+  null,  // project 2 — add URL when ready
+];
+
+fbxModels.forEach((url, idx) => {
+  if (!url) return;
+  document.getElementById('loading-' + idx).classList.add('active');
+  const v = initViewer(idx);
+  new THREE.FBXLoader().load(url, root => onModelLoaded(root, v, idx, null), undefined, err => {
+    console.error(err);
+    document.getElementById('loading-' + idx).classList.remove('active');
+  });
+});
 
 // ════════════════════════════════════════════════════════
 //  Gallery system
