@@ -20,8 +20,27 @@ router.get('/', async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-});
 
+});
+// POST /api/projects — create a new project by name (admin only)
+router.post('/', auth, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ message: 'Project name is required' });
+    const project = new Project({
+      title: name,
+      description: '',
+      fbxUrl: '',
+      thumbnailUrl: '',
+      fileName: '',
+      tags: [],
+    });
+    await project.save();
+    res.status(201).json({ _id: project._id, name: project.title, order: 0 });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 // GET /api/projects/:id
 router.get('/:id', async (req, res) => {
   try {
