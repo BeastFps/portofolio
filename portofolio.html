@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sahil Som — 3D Artist</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0906;--surface:#111009;--card:#161410;
+  --amber:#d4850a;--amber-light:#f0a832;--amber-dim:#7a4c05;
+  --cream:#f2e8d5;--muted:#6b6358;--border:rgba(212,133,10,0.18);
+  --font-display:'Cormorant Garamond',serif;
+  --font-ui:'Syne',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--cream);font-family:var(--font-ui);overflow-x:hidden;cursor:none}
+
+/* CURSOR */
+#cursor{width:10px;height:10px;border-radius:50%;background:var(--amber);position:fixed;top:0;left:0;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s,background .2s;mix-blend-mode:screen}
+#cursor-ring{width:36px;height:36px;border:1px solid rgba(212,133,10,.5);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1.5rem 4rem;border-bottom:1px solid transparent;transition:border-color .4s,background .4s,backdrop-filter .4s}
+nav.scrolled{border-color:var(--border);background:rgba(10,9,6,.85);backdrop-filter:blur(12px)}
+.nav-logo{font-family:var(--font-display);font-size:1.5rem;font-weight:300;letter-spacing:.04em;color:var(--cream);text-decoration:none}
+.nav-links{display:flex;gap:2.5rem;list-style:none}
+.nav-links a{font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--amber-light)}
+
+/* HERO */
+#hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:0 4rem;gap:4rem;position:relative;overflow:hidden}
+.hero-bg-text{position:absolute;font-family:var(--font-display);font-size:28vw;font-weight:600;color:rgba(212,133,10,.03);top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;letter-spacing:-.05em;user-select:none}
+.hero-left{position:relative;z-index:2}
+.hero-eyebrow{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.2em;color:var(--amber);text-transform:uppercase;margin-bottom:1.5rem;opacity:0;transform:translateY(20px);animation:fadeUp .8s .2s forwards}
+.hero-name{font-family:var(--font-display);font-size:clamp(3.5rem,7vw,7rem);font-weight:300;line-height:.95;letter-spacing:-.02em;margin-bottom:2rem;opacity:0;transform:translateY(30px);animation:fadeUp .9s .4s forwards}
+.hero-name em{font-style:italic;color:var(--amber-light);display:block}
+.hero-desc{font-size:.95rem;line-height:1.75;color:var(--muted);max-width:380px;margin-bottom:3rem;opacity:0;transform:translateY(20px);animation:fadeUp .8s .6s forwards}
+.hero-cta{display:flex;gap:1.5rem;align-items:center;opacity:0;transform:translateY(20px);animation:fadeUp .8s .8s forwards}
+.btn-primary{background:var(--amber);color:#0a0906;padding:.85rem 2.2rem;border:none;font-family:var(--font-ui);font-size:.75rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;cursor:none;text-decoration:none;transition:background .2s,transform .15s;display:inline-block}
+.btn-primary:hover{background:var(--amber-light);transform:translateY(-2px)}
+.btn-ghost{color:var(--muted);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:2px;transition:color .2s,border-color .2s}
+.btn-ghost:hover{color:var(--cream);border-color:var(--cream)}
+
+/* HERO PHOTO */
+.hero-photo-wrap{position:relative;display:flex;justify-content:flex-end;z-index:2;opacity:0;transform:translateX(30px);animation:fadeLeft 1s .5s forwards}
+.hero-photo-frame{width:100%;max-width:480px;aspect-ratio:3/4;position:relative}
+.hero-photo-frame::before{content:'';position:absolute;inset:-1px;border:1px solid var(--border);pointer-events:none;z-index:2}
+.hero-photo-frame::after{content:'';position:absolute;bottom:-16px;right:-16px;width:100%;height:100%;border:1px solid rgba(212,133,10,.1);z-index:0}
+
+/* Photo placeholder (no image yet) */
+.photo-placeholder{width:100%;height:100%;position:relative;z-index:1;background:linear-gradient(160deg,#1a1510 0%,#0d0b08 50%,#1e1408 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem}
+.photo-placeholder::before{content:'';position:absolute;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(212,133,10,.12),transparent 70%);top:30%;left:50%;transform:translate(-50%,-50%)}
+.upload-avatar{width:110px;height:110px;border-radius:50%;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.upload-avatar svg{width:56px;height:56px;opacity:.4}
+.upload-name{font-family:var(--font-display);font-size:1.2rem;color:rgba(242,232,213,.4);font-style:italic;position:relative;z-index:1}
+
+/* Actual loaded photo */
+.photo-actual{width:100%;height:100%;object-fit:cover;display:none;position:absolute;inset:0;z-index:1;filter:grayscale(15%) contrast(1.05)}
+.photo-actual.loaded{display:block}
+.photo-label{position:absolute;bottom:1.5rem;left:-2rem;background:var(--amber);color:#0a0906;padding:.5rem 1rem;font-family:var(--font-mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;font-weight:400;z-index:3;transform:rotate(-90deg);transform-origin:right bottom;white-space:nowrap}
+
+/* STATS */
+.stats-strip{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:2rem 4rem;display:grid;grid-template-columns:repeat(4,1fr)}
+.stat-item{padding:0 2rem;border-right:1px solid var(--border)}
+.stat-item:first-child{padding-left:0}
+.stat-item:last-child{border-right:none}
+.stat-number{font-family:var(--font-display);font-size:3rem;font-weight:300;color:var(--amber-light);line-height:1;margin-bottom:.25rem}
+.stat-label{font-family:var(--font-mono);font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+
+/* SECTION HEADINGS */
+.section-header{display:flex;align-items:baseline;gap:1.5rem;margin-bottom:3.5rem}
+.section-num{font-family:var(--font-mono);font-size:.7rem;color:var(--amber);letter-spacing:.1em}
+.section-title{font-family:var(--font-display);font-size:clamp(2.5rem,5vw,4.5rem);font-weight:300;color:var(--cream);letter-spacing:-.02em;line-height:1}
+.section-line{flex:1;height:1px;background:var(--border);margin-bottom:.4rem}
+
+/* PROJECTS */
+#projects{padding:6rem 4rem}
+.project-block{margin-bottom:3.5rem;border:1px solid var(--border);background:var(--card);transition:border-color .3s}
+.project-block:hover{border-color:rgba(212,133,10,.35)}
+.project-card{border:none;overflow:hidden;display:grid;grid-template-columns:1fr 1.2fr;min-height:460px}
+.project-card.reverse{grid-template-columns:1.2fr 1fr}
+.project-card.reverse .project-viewer{order:-1}
+.project-info{padding:3rem;display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid var(--border)}
+.project-card.reverse .project-info{border-right:none;border-left:1px solid var(--border)}
+.project-tag{font-family:var(--font-mono);font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);margin-bottom:1rem}
+.project-title{font-family:var(--font-display);font-size:clamp(2rem,3.5vw,3.2rem);font-weight:300;line-height:1.05;letter-spacing:-.02em;margin-bottom:1.5rem}
+.project-desc{font-size:.875rem;line-height:1.75;color:var(--muted);flex:1;margin-bottom:2rem}
+.project-meta{display:flex;gap:1rem;flex-wrap:wrap}
+.meta-chip{border:1px solid var(--border);padding:.3rem .75rem;font-family:var(--font-mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* 3D VIEWER */
+.project-viewer{position:relative;background:#0c0a07;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.drop-zone{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;cursor:pointer;transition:background .2s;z-index:3}
+.drop-zone.hidden{display:none}
+.drop-zone.dragging-over{background:rgba(212,133,10,.06)}
+.drop-zone-ring{width:100px;height:100px;border-radius:50%;border:1px dashed rgba(212,133,10,.3);display:flex;align-items:center;justify-content:center;transition:border-color .2s,transform .2s;position:relative}
+.drop-zone:hover .drop-zone-ring,.drop-zone.dragging-over .drop-zone-ring{border-color:rgba(212,133,10,.7);transform:scale(1.05)}
+.drop-zone-ring::before{content:'';position:absolute;width:130px;height:130px;border-radius:50%;border:1px dashed rgba(212,133,10,.1)}
+.drop-zone-icon{width:36px;height:36px;opacity:.45}
+.drop-zone-title{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(212,133,10,.7);text-align:center}
+.drop-zone-sub{font-family:var(--font-mono);font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center}
+.drop-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.viewer-canvas{width:100%!important;height:100%!important;display:none;touch-action:none;position:absolute;inset:0}
+.viewer-canvas.active{display:block}
+.viewer-hint{position:absolute;bottom:1.25rem;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(212,133,10,.5);display:none;align-items:center;gap:.5rem;pointer-events:none;animation:breathe 2.5s ease-in-out infinite;white-space:nowrap;z-index:4}
+.viewer-hint.active{display:flex}
+.viewer-hint::before,.viewer-hint::after{content:'—'}
+.viewer-badge{position:absolute;top:1rem;right:1rem;background:rgba(10,9,6,.7);border:1px solid var(--border);backdrop-filter:blur(8px);padding:.4rem .75rem;font-family:var(--font-mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);z-index:4}
+.viewer-remove{position:absolute;top:1rem;left:1rem;background:rgba(10,9,6,.75);border:1px solid rgba(212,133,10,.35);color:var(--amber);font-size:.65rem;font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;padding:.35rem .7rem;cursor:pointer;z-index:5;display:none;transition:background .2s}
+.viewer-remove.active{display:block}
+.viewer-remove:hover{background:rgba(212,133,10,.15)}
+.viewer-loading{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:1rem;z-index:6;background:rgba(12,10,7,.7);backdrop-filter:blur(4px)}
+.viewer-loading.active{display:flex}
+.loading-spinner{width:32px;height:32px;border:1px solid rgba(212,133,10,.2);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite}
+.loading-text{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--amber-dim)}
+
+/* GALLERY */
+.project-gallery{border-top:1px solid var(--border);position:relative;background:#080705}
+.gallery-hero{position:relative;width:100%;aspect-ratio:16/5;overflow:hidden;background:#080705}
+.gallery-hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;animation:galleryFadeIn .45s ease forwards}
+.gallery-hero-img.active{display:block}
+@keyframes galleryFadeIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:scale(1)}}
+.gallery-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem}
+.gallery-empty.hidden{display:none}
+.gallery-empty-ring{width:90px;height:90px;border-radius:50%;border:1px dashed rgba(212,133,10,.28);display:flex;align-items:center;justify-content:center;position:relative}
+.gallery-empty-ring::before{content:'';position:absolute;width:118px;height:118px;border-radius:50%;border:1px dashed rgba(212,133,10,.1)}
+.gallery-empty svg{width:32px;height:32px;opacity:.4}
+.gallery-empty-label{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(212,133,10,.5);text-align:center}
+.gallery-counter{position:absolute;bottom:1.2rem;right:1.2rem;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.15em;color:rgba(212,133,10,.7);background:rgba(10,9,6,.65);border:1px solid var(--border);backdrop-filter:blur(6px);padding:.3rem .65rem;display:none;z-index:3}
+.gallery-counter.active{display:block}
+.gallery-arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(10,9,6,.55);border:1px solid rgba(212,133,10,.28);backdrop-filter:blur(6px);color:var(--amber);font-size:1rem;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:4;transition:background .2s,border-color .2s;user-select:none}
+.gallery-arrow:hover{background:rgba(212,133,10,.15);border-color:rgba(212,133,10,.6)}
+.gallery-arrow.active{display:flex}
+.gallery-arrow.prev{left:1rem}
+.gallery-arrow.next{right:1rem}
+.gallery-scroll-hint{position:absolute;bottom:1.2rem;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(212,133,10,.45);display:none;align-items:center;gap:.4rem;pointer-events:none;animation:breathe 2.5s ease-in-out infinite;z-index:3;white-space:nowrap}
+.gallery-scroll-hint.active{display:flex}
+.gallery-scroll-hint::before,.gallery-scroll-hint::after{content:'—'}
+.gallery-thumbs{display:flex;border-top:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.gallery-thumbs::-webkit-scrollbar{display:none}
+.gallery-thumb{flex:0 0 25%;aspect-ratio:16/10;position:relative;overflow:hidden;border-right:1px solid var(--border);cursor:pointer;transition:background .2s}
+.gallery-thumb:last-child{border-right:none}
+.gallery-thumb img{width:100%;height:100%;object-fit:cover;display:block;opacity:.55;transition:opacity .25s}
+.gallery-thumb.active img,.gallery-thumb:hover img{opacity:1}
+.gallery-thumb.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--amber)}
+/* Empty thumb — display only, no upload */
+.gallery-thumb-empty{flex:0 0 25%;aspect-ratio:16/10;position:relative;overflow:hidden;border-right:1px solid var(--border);background:rgba(212,133,10,.018)}
+.gallery-thumb-empty:last-child{border-right:none}
+.gallery-thumb-num{position:absolute;top:.3rem;left:.4rem;font-family:var(--font-mono);font-size:.45rem;letter-spacing:.08em;color:rgba(212,133,10,.18)}
+
+/* ABOUT */
+#about{padding:6rem 4rem;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1.5fr;gap:5rem;align-items:start}
+.about-sticky{position:sticky;top:8rem}
+.about-body p{font-size:1rem;line-height:1.85;color:var(--muted);margin-bottom:1.5rem}
+.about-body p strong{color:var(--cream);font-weight:700}
+.skills-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-top:3rem;border:1px solid var(--border)}
+.skill-cell{padding:1.25rem 1.5rem;border:1px solid var(--border);background:var(--card)}
+.skill-name{font-size:.8rem;font-weight:700;letter-spacing:.08em;margin-bottom:.25rem;color:var(--cream)}
+.skill-level{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber-dim)}
+.skill-bar{height:1px;background:var(--border);margin-top:.75rem;position:relative}
+.skill-bar-fill{position:absolute;top:0;left:0;height:100%;background:var(--amber);transition:width 1.5s ease}
+
+/* CONTACT */
+#contact{padding:6rem 4rem;border-top:1px solid var(--border);text-align:center}
+.contact-headline{font-family:var(--font-display);font-size:clamp(3rem,8vw,9rem);font-weight:300;line-height:.9;letter-spacing:-.03em;margin-bottom:3rem}
+.contact-headline em{font-style:italic;color:var(--amber)}
+.contact-email{font-family:var(--font-mono);font-size:.85rem;letter-spacing:.15em;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:2px;transition:color .2s}
+.contact-email:hover{color:var(--amber-light)}
+
+/* FOOTER */
+footer{padding:2rem 4rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+footer p{font-family:var(--font-mono);font-size:.65rem;letter-spacing:.1em;color:var(--muted)}
+
+/* ANIMATIONS */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease}
+.reveal.visible{opacity:1;transform:none}
+@keyframes fadeUp{to{opacity:1;transform:none}}
+@keyframes fadeLeft{to{opacity:1;transform:none}}
+@keyframes breathe{0%,100%{opacity:.4}50%{opacity:.8}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:1.25rem 1.5rem}
+  #hero{grid-template-columns:1fr;padding:7rem 1.5rem 3rem;min-height:auto}
+  .hero-photo-wrap{justify-content:center;margin-top:2rem}
+  .hero-photo-frame{max-width:280px}
+  .photo-label{display:none}
+  .stats-strip{grid-template-columns:1fr 1fr;padding:1.5rem;gap:1.5rem}
+  .stat-item{border-right:none;border-bottom:1px solid var(--border);padding:0 0 1.5rem}
+  .stat-item:nth-child(2),.stat-item:nth-child(4){border-bottom:none}
+  #projects{padding:4rem 1.5rem}
+  .project-card,.project-card.reverse{grid-template-columns:1fr;min-height:auto}
+  .project-viewer{height:340px}
+  .project-card.reverse .project-viewer{order:0}
+  .project-info{border-right:none!important;border-left:none!important;border-bottom:1px solid var(--border)}
+  #about{grid-template-columns:1fr;padding:4rem 1.5rem;gap:2rem}
+  .about-sticky{position:static}
+  #contact{padding:4rem 1.5rem}
+  footer{flex-direction:column;gap:1rem;padding:1.5rem;text-align:center}
+  body{cursor:auto}
+  #cursor,#cursor-ring{display:none}
+  .gallery-hero{aspect-ratio:4/3}
+  .gallery-thumb,.gallery-thumb-empty{flex:0 0 50%}
+}
+</style>
+</head>
+<body>
+
+<script>
+// ── Inlined api.js ───────────────────────────────────────────
+const BASE_URL = 'https://portofolio-production-035c.up.railway.app';
+const Auth = {
+  setToken(t)  { localStorage.setItem('jwt_token', t); },
+  getToken()   { return localStorage.getItem('jwt_token'); },
+  clearToken() { localStorage.removeItem('jwt_token'); },
+  isLoggedIn() { return !!localStorage.getItem('jwt_token'); },
+};
+async function _request(method, path, body = null, isFormData = false) {
+  const headers = {};
+  const token = Auth.getToken();
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  if (body && !isFormData) headers['Content-Type'] = 'application/json';
+  const res = await fetch(BASE_URL + path, {
+    method, headers, credentials: 'include',
+    body: isFormData ? body : (body ? JSON.stringify(body) : null),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+const API = {
+  login:         (email, password) => _request('POST', '/api/auth/login', { email, password }),
+  getPhotos:     ()                => _request('GET',  '/api/photos'),
+  uploadPhoto:   (file, cat)       => { const fd = new FormData(); fd.append('image', file); fd.append('category', cat); return _request('POST', '/api/photos', fd, true); },
+  deletePhoto:   (id)              => _request('DELETE', '/api/photos/' + id),
+  getProjects:   ()                => _request('GET',  '/api/projects'),
+  createProject: (name)            => _request('POST', '/api/projects', { name }),
+  deleteProject: (id)              => _request('DELETE', '/api/projects/' + id),
+};
+</script>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<nav id="navbar">
+  <a href="#" class="nav-logo">Sahil Som</a>
+  <ul class="nav-links">
+    <li><a href="#projects">Work</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg-text" aria-hidden="true">3D</div>
+  <div class="hero-left">
+    <p class="hero-eyebrow">3D Artist</p>
+    <h1 class="hero-name">Sahil<br><em>Som</em></h1>
+    <p class="hero-desc">I'm a creative 3D Artist who transforms concepts into immersive visual experiences. From detailed modeling to cinematic rendering, I focus on building artwork that combines storytelling, realism, and modern design aesthetics.</p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn-primary">View My Work</a>
+      <a href="#contact" class="btn-ghost">Get in touch →</a>
+    </div>
+  </div>
+
+  <div class="hero-photo-wrap">
+    <div class="hero-photo-frame" id="photoFrame">
+      <!-- Actual photo — shown once loaded from API -->
+      <img class="photo-actual" id="profilePhoto" alt="Sahil Som" />
+
+      <!-- Placeholder — shown when no photo in backend yet -->
+      <div class="photo-placeholder" id="photoPlaceholder">
+        <div class="upload-avatar">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="24" r="14" stroke="#d4850a" stroke-width="1.5"/>
+            <path d="M8 56c0-13.255 10.745-24 24-24s24 10.745 24 24" stroke="#d4850a" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p class="upload-name">Sahil Som</p>
+      </div>
+
+      <div class="photo-label">Mumbai, India · Since 2019</div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip reveal">
+  <div class="stat-item"><div class="stat-number">5</div><div class="stat-label">Projects Completed</div></div>
+  <div class="stat-item"><div class="stat-number">3</div><div class="stat-label">Years Experience</div></div>
+</div>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-header reveal">
+    <span class="section-num">01</span>
+    <h2 class="section-title">Selected Work</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <!-- PROJECT 0 -->
+  <div class="project-block reveal">
+    <div class="project-card">
+      <div class="project-info">
+        <div>
+          <p class="project-tag">3D Modelling · Maya</p>
+          <h3 class="project-title">Kukri Knife<br>Damascus Steel</h3>
+          <p class="project-desc">Forged for the battlefield. Game-ready Kukri featuring Damascus steel, a rugged rubber grip, and subtle battle wear. Optimized for real-time rendering and modern game pipelines.</p>
+        </div>
+        <div class="project-meta">
+          <span class="meta-chip">Maya</span><span class="meta-chip">Substance Painter</span><span class="meta-chip">Marmoset Toolbag</span>
+        </div>
+      </div>
+      <div class="project-viewer" id="viewer-0">
+        <canvas class="viewer-canvas" id="canvas-0"></canvas>
+        <div class="drop-zone" id="drop-0">
+          <div class="drop-zone-ring"><svg class="drop-zone-icon" viewBox="0 0 24 24" fill="none" stroke="#d4850a" stroke-width="1.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+          <div class="drop-zone-title">Drop your .fbx / .glb / .gltf</div>
+          <div class="drop-zone-sub">or click to browse</div>
+          <input type="file" accept=".fbx,.glb,.gltf" onchange="loadModel(this,0)">
+        </div>
+        <div class="viewer-loading" id="loading-0"><div class="loading-spinner"></div><div class="loading-text">Loading model…</div></div>
+        <div class="viewer-badge">360° Interactive</div>
+        <div class="viewer-hint" id="hint-0">Drag or swipe to rotate</div>
+        <button class="viewer-remove" id="remove-0" onclick="removeModel(0)">✕ Remove</button>
+      </div>
+    </div>
+    <!-- Gallery — images loaded from API -->
+    <div class="project-gallery" id="gallery-0">
+      <div class="gallery-hero" id="ghero-0">
+        <div class="gallery-empty" id="gempty-0"><div class="gallery-empty-ring"><svg viewBox="0 0 24 24" fill="none" stroke="#d4850a" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><div class="gallery-empty-label">No images yet</div></div>
+        <button class="gallery-arrow prev" id="garr-prev-0" onclick="galleryNav(0,-1)">&#8592;</button>
+        <button class="gallery-arrow next" id="garr-next-0" onclick="galleryNav(0,1)">&#8594;</button>
+        <div class="gallery-counter" id="gcounter-0"></div>
+        <div class="gallery-scroll-hint" id="gscroll-0">Scroll to explore</div>
+      </div>
+      <div class="gallery-thumbs" id="gthumbs-0">
+        <div class="gallery-thumb-empty" id="gthumb-0-0"><span class="gallery-thumb-num">01</span></div>
+        <div class="gallery-thumb-empty" id="gthumb-0-1"><span class="gallery-thumb-num">02</span></div>
+        <div class="gallery-thumb-empty" id="gthumb-0-2"><span class="gallery-thumb-num">03</span></div>
+        <div class="gallery-thumb-empty" id="gthumb-0-3"><span class="gallery-thumb-num">04</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECT 1 -->
+  <div class="project-block reveal">
+    <div class="project-card reverse">
+      <div class="project-info">
+        <div>
+          <p class="project-tag">Character Design · Animation</p>
+          <h3 class="project-title">Obsidian<br>Shard</h3>
+          <p class="project-desc">A faceted gem sculpture with physically-based refractive materials. This project explores how light bends through hard-surface geometry — a meditative study in translucency and form.</p>
+        </div>
+        <div class="project-meta">
+          <span class="meta-chip">Blender 4.0</span><span class="meta-chip">EEVEE Next</span><span class="meta-chip">Glass BSDF</span><span class="meta-chip">2024</span>
+        </div>
+      </div>
+      <div class="project-viewer" id="viewer-1">
+        <canvas class="viewer-canvas" id="canvas-1"></canvas>
+        <div class="drop-zone" id="drop-1"><div class="drop-zone-ring"><svg class="drop-zone-icon" viewBox="0 0 24 24" fill="none" stroke="#d4850a" stroke-width="1.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div><div class="drop-zone-title">Drop your .fbx / .glb / .gltf</div><div class="drop-zone-sub">or click to browse</div><input type="file" accept=".fbx,.glb,.gltf" onchange="loadModel(this,1)"></div>
+        <div class="viewer-loading" id="loading-1"><div class="loading-spinner"></div><div class="loading-text">Loading model…</div></div>
+        <div class="viewer-badge">360° Interactive</div>
+        <div class="viewer-hint" id="hint-1">Drag or swipe to rotate</div>
+        <button class="viewer-remove" id="remove-1" onclick="removeModel(1)">✕ Remove</button>
+      </div>
+    </div>
+    <div class="project-gallery" id="gallery-1">
+      <div class="gallery-hero" id="ghero-1"><div class="gallery-empty" id="gempty-1"><div class="gallery-empty-ring"><svg viewBox="0 0 24 24" fill="none" stroke="#d4850a" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><div class="gallery-empty-label">No images yet</div></div><button class="gallery-arrow prev" id="garr-prev-1" onclick="galleryNav(1,-1)">&#8592;</button><button class="gallery-arrow next" id="garr-next-1" onclick="galleryNav(1,1)">&#8594;</button><div class="gallery-counter" id="gcounter-1"></div><div class="gallery-scroll-hint" id="gscroll-1">Scroll to explore</div></div>
+      <div class="gallery-thumbs" id="gthumbs-1">
+        <div class="gallery-thumb-empty" id="gthumb-1-0"><span class="gallery-thumb-num">01</span></div>
+        <div class="gallery-thumb-empty" id="gthumb-1-1"><span class="gallery-thumb-num">02</span></div>
+        <div class="gallery-thumb-empty" id="gthumb-1-2"><span class="gallery-thumb-num">03</span></div>
+        <div class="gallery-thumb-empty" id="gthumb-1-3"><span class="gallery-thumb-num">04</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECT 2 -->
+  <div class="project-block reveal">
+    <div class="project-card">
+      <div class="project-info">
+        <div>
+          <p class="project-tag">Hard Surface · Sci-Fi</p>
+          <h3 class="project-title">Vega-7<br>Scout Craft</h3>
+          <p class="project-desc">A compact interstellar scout vessel built from hard-surface modelling principles. Panel lines, engine glows, and weathered paint bring this spacecraft to life in the void of space.</p>
+        </div>
+        <div class="project-meta">
+          <span class="meta-chip">Blender 4.1</span><span class="meta-chip">Hard Surface</span><span class="meta-chip">Sci-Fi</span><span class="meta-chip">2025</span>
+        </div>
+      </div>
+      <div class="project-viewer" id="viewer-2">
+        <canvas class="viewer-canvas" id="canvas-2"></canvas>
+        <div class="drop-zone" id="drop-2"><div class="drop-zone-ring"><svg class="drop-zone-icon" viewBox="0 0 24 24" fill="none" stroke="#d4850a" stroke-width="1.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div><div class="drop-zone-title">Drop your .fbx / .glb / .gltf</div><div class="drop-zone-sub">or click to browse</div><input type="file" accept=".fbx,.glb,.gltf" onchange="loadModel(this,2)"></div>
+        <div class="viewer-loading" id="loading-2"><div class="loading-spinner"></div><div class="loading-text">Loading model…</div></div>
+        <div class="viewer-badge">360° Interactive</div>
+        <div class="viewer-hint" id="hint-2">Drag or swipe to rotate</div>
+        <button class="viewer-remove" id="remove-2" onclick="removeModel(2)">✕ Remove</button>
+      </div>
+    </div>
+    <div class="project-gallery" id="gallery-2">
+      <div class="gallery-hero" id="ghero-2"><div class="gallery-empty" id="gempty-2"><div class="gallery-empty-ring"><svg viewBox="0 0 24 24" fill="none" stroke="#d4850a" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><div class="gallery-empty-label">No images yet</div></div><button class="gallery-arrow prev" id="garr-prev-2" onclick="galleryNav(2,-1)">&#8592;</button><button class="gallery-arrow next" id="garr-next-2" onclick="galleryNav(2,1)">&#8594;</button><div class="gallery-counter" id="gcounter-2"></div><div class="gallery-scroll-hint" id="gscroll-2">Scroll to explore</div></div>
+      <div class="gallery-thumbs" id="gthumbs-2">
+        <div class="gallery-thumb-empty" id="gthumb-2-0"><span class="gallery-thumb-num">01</span></div>
+        <div class="gallery-thumb-empty" id="gthumb-2-1"><span class="gallery-thumb-num">02</span></div>
+        <div class="gallery-thumb-empty" id="gthumb-2-2"><span class="gallery-thumb-num">03</span></div>
+        <div class="gallery-thumb-empty" id="gthumb-2-3"><span class="gallery-thumb-num">04</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-sticky reveal">
+    <div class="section-header" style="margin-bottom:2rem"><span class="section-num">02</span></div>
+    <h2 class="section-title" style="font-size:clamp(2rem,4vw,3.5rem)">About<br><em style="font-style:italic;color:var(--amber)">Me</em></h2>
+  </div>
+  <div class="about-body reveal">
+    <p>I'm <strong>Sahil Som</strong>, a 3D animator and visual storyteller based in Mumbai. I've been obsessed with the intersection of art and technology since I first opened Blender at 16 and made a terrible-looking donut.</p>
+    <p>Today I specialise in <strong>product visualisation, character animation, and motion graphics</strong> — working with brands, studios, and indie game teams to bring ideas to life in three dimensions.</p>
+    <p>When I'm not rendering, I'm studying light in old Bollywood films, deconstructing Hayao Miyazaki's timing, or hiking somewhere with bad phone signal.</p>
+    <div class="skills-grid">
+      <div class="skill-cell"><div class="skill-name">Blender</div><div class="skill-level">Expert</div><div class="skill-bar"><div class="skill-bar-fill" style="width:95%"></div></div></div>
+      <div class="skill-cell"><div class="skill-name">Cinema 4D</div><div class="skill-level">Advanced</div><div class="skill-bar"><div class="skill-bar-fill" style="width:80%"></div></div></div>
+      <div class="skill-cell"><div class="skill-name">Substance Painter</div><div class="skill-level">Advanced</div><div class="skill-bar"><div class="skill-bar-fill" style="width:78%"></div></div></div>
+      <div class="skill-cell"><div class="skill-name">After Effects</div><div class="skill-level">Proficient</div><div class="skill-bar"><div class="skill-bar-fill" style="width:70%"></div></div></div>
+      <div class="skill-cell"><div class="skill-name">Houdini</div><div class="skill-level">Intermediate</div><div class="skill-bar"><div class="skill-bar-fill" style="width:55%"></div></div></div>
+      <div class="skill-cell"><div class="skill-name">Unreal Engine</div><div class="skill-level">Intermediate</div><div class="skill-bar"><div class="skill-bar-fill" style="width:60%"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <h2 class="contact-headline reveal">Let's make<br>something <em>real.</em></h2>
+  <br>
+  <a href="mailto:rajputsahilsom@gmail.com" class="contact-email reveal">
+    rajputsahilsom@gmail.com<br>+91 9997604248
+  </a>
+</section>
+
+<footer>
+  <p></p>
+  <a href="admin.html" style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;color:rgba(107,99,88,0.4);text-decoration:none;text-transform:uppercase;transition:color .2s" onmouseover="this.style.color='#d4850a'" onmouseout="this.style.color='rgba(107,99,88,0.4)'">Admin</a>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/fflate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  Load portfolio data from Railway backend
+// ════════════════════════════════════════════════════════
+async function loadPortfolioData() {
+  try {
+    const photos = await API.getPhotos();
+
+    // Build a lookup map: category → photo object
+    const photoMap = {};
+    photos.forEach(p => { photoMap[p.category] = p; });
+
+    // ── Profile photo ──────────────────────────────────
+    const profilePhoto = photoMap['profile-main'];
+    if (profilePhoto) {
+      const img = document.getElementById('profilePhoto');
+      const placeholder = document.getElementById('photoPlaceholder');
+      img.src = profilePhoto.url;
+      img.classList.add('loaded');
+      if (placeholder) placeholder.style.display = 'none';
+    }
+
+    // ── Gallery images ─────────────────────────────────
+    // 3 hardcoded projects × 4 slots each
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 4; j++) {
+        const photo = photoMap[`proj-${i}-img-${j}`];
+        if (photo) gallerySetImage(i, j, photo.url);
+      }
+    }
+  } catch (e) {
+    // Backend unreachable — page still works, just no images
+    console.warn('[portfolio] Could not load data from backend:', e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  Gallery system
+// ════════════════════════════════════════════════════════
+const galleries = {};
+
+function galleryState(idx) {
+  if (!galleries[idx]) galleries[idx] = { images: Array(4).fill(null), current: 0 };
+  return galleries[idx];
+}
+
+// Called by loadPortfolioData — sets an image into a slot and re-renders
+function gallerySetImage(idx, slotIdx, url) {
+  const g = galleryState(idx);
+  g.images[slotIdx] = url;
+
+  // Convert the thumb from empty → filled
+  const thumbEl = document.getElementById(`gthumb-${idx}-${slotIdx}`);
+  if (thumbEl) {
+    thumbEl.className = 'gallery-thumb';
+    thumbEl.innerHTML = `<img src="${url}" alt="">`;
+    thumbEl.onclick = () => { galleryState(idx).current = slotIdx; galleryRender(idx); };
+  }
+
+  // Show first available image
+  const filled = g.images.map((s, i) => s ? i : -1).filter(i => i >= 0);
+  if (filled.length === 1) g.current = slotIdx;
+
+  galleryRender(idx);
+}
+
+function galleryRender(idx) {
+  const g = galleryState(idx);
+  const hero = document.getElementById('ghero-' + idx);
+  const empty = document.getElementById('gempty-' + idx);
+  const counter = document.getElementById('gcounter-' + idx);
+  const scrollHint = document.getElementById('gscroll-' + idx);
+  const prevBtn = document.getElementById('garr-prev-' + idx);
+  const nextBtn = document.getElementById('garr-next-' + idx);
+
+  hero.querySelectorAll('img.gallery-hero-img').forEach(el => el.remove());
+
+  const filledIndices = g.images.map((s, i) => s ? i : -1).filter(i => i >= 0);
+  if (!filledIndices.length) {
+    empty.classList.remove('hidden');
+    counter.classList.remove('active');
+    scrollHint.classList.remove('active');
+    prevBtn.classList.remove('active');
+    nextBtn.classList.remove('active');
+    return;
+  }
+
+  if (!g.images[g.current]) g.current = filledIndices[0];
+  empty.classList.add('hidden');
+
+  filledIndices.forEach(fi => {
+    const img = document.createElement('img');
+    img.className = 'gallery-hero-img' + (fi === g.current ? ' active' : '');
+    img.src = g.images[fi];
+    hero.appendChild(img);
+  });
+
+  const pos = filledIndices.indexOf(g.current) + 1;
+  counter.textContent = pos + ' / ' + filledIndices.length;
+  counter.classList.add('active');
+
+  const multi = filledIndices.length > 1;
+  scrollHint.classList.toggle('active', multi);
+  prevBtn.classList.toggle('active', multi);
+  nextBtn.classList.toggle('active', multi);
+
+  for (let t = 0; t < 4; t++) {
+    const el = document.getElementById('gthumb-' + idx + '-' + t);
+    if (el) el.classList.toggle('active', t === g.current);
+  }
+}
+
+function galleryNav(idx, dir) {
+  const g = galleryState(idx);
+  const fi = g.images.map((s, i) => s ? i : -1).filter(i => i >= 0);
+  if (fi.length < 2) return;
+  const pos = fi.indexOf(g.current);
+  g.current = fi[(pos + dir + fi.length) % fi.length];
+  galleryRender(idx);
+}
+
+// ── Wheel & touch on gallery heroes ──────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  for (let i = 0; i < 3; i++) {
+    const hero = document.getElementById('ghero-' + i);
+    if (!hero) continue;
+    let cool = false;
+    hero.addEventListener('wheel', e => {
+      const g = galleryState(i);
+      if (g.images.filter(s => s).length < 2) return;
+      e.preventDefault();
+      if (cool) return; cool = true;
+      galleryNav(i, e.deltaY > 0 ? 1 : -1);
+      setTimeout(() => { cool = false; }, 350);
+    }, { passive: false });
+    let tx = 0;
+    hero.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+    hero.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - tx;
+      if (Math.abs(dx) > 40) galleryNav(i, dx < 0 ? 1 : -1);
+    });
+  }
+
+  // Load photos from backend
+  loadPortfolioData();
+});
+
+// ════════════════════════════════════════════════════════
+//  Cursor
+// ════════════════════════════════════════════════════════
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+(function animCursor(){
+  rx += (mx-rx)*.15; ry += (my-ry)*.15;
+  cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(animCursor);
+})();
+document.querySelectorAll('a,button,.project-viewer').forEach(el => {
+  el.addEventListener('mouseenter', () => { cursor.style.width='20px'; cursor.style.height='20px'; ring.style.width='60px'; ring.style.height='60px'; });
+  el.addEventListener('mouseleave', () => { cursor.style.width='10px'; cursor.style.height='10px'; ring.style.width='36px'; ring.style.height='36px'; });
+});
+
+// ════════════════════════════════════════════════════════
+//  Nav scroll
+// ════════════════════════════════════════════════════════
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// ════════════════════════════════════════════════════════
+//  Reveal on scroll
+// ════════════════════════════════════════════════════════
+const ro = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
+
+// ════════════════════════════════════════════════════════
+//  3D Viewer system (unchanged — local file drop)
+// ════════════════════════════════════════════════════════
+const viewers = {};
+function initViewer(idx) {
+  if (viewers[idx]) return viewers[idx];
+  const container = document.getElementById('viewer-' + idx);
+  const canvas = document.getElementById('canvas-' + idx);
+  const w = () => container.clientWidth || 400;
+  const h = () => container.clientHeight || 460;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(w(), h());
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.3;
+  const scene = new THREE.Scene();
+  scene.background = null;
+  const camera = new THREE.PerspectiveCamera(42, w()/h(), 0.1, 1000);
+  camera.position.set(0, 0, 4);
+  scene.add(new THREE.AmbientLight(0xfff8e8, 0.6));
+  const key = new THREE.DirectionalLight(0xfff0cc, 3); key.position.set(3,5,4); key.castShadow=true; scene.add(key);
+  const fill = new THREE.DirectionalLight(0xd4850a, 0.9); fill.position.set(-4,2,-2); scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xffffff, 1.2); rim.position.set(0,4,-5); scene.add(rim);
+  let model=null,autoAngle=0,isDragging=false,prevX=0,prevY=0,rotX=0,rotY=0,velX=0,velY=0,autoSpin=true;
+  canvas.addEventListener('mousedown', e => { isDragging=true; prevX=e.clientX; prevY=e.clientY; autoSpin=false; velX=velY=0; });
+  window.addEventListener('mouseup', () => { isDragging=false; });
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    velX=(e.clientX-prevX)*.005; velY=(e.clientY-prevY)*.005;
+    rotY+=velX; rotX=Math.max(-.9,Math.min(.9,rotX+velY));
+    prevX=e.clientX; prevY=e.clientY;
+  });
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); isDragging=true; prevX=e.touches[0].clientX; prevY=e.touches[0].clientY; autoSpin=false; }, { passive:false });
+  canvas.addEventListener('touchend', () => { isDragging=false; });
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!isDragging) return;
+    velX=(e.touches[0].clientX-prevX)*.005; velY=(e.touches[0].clientY-prevY)*.005;
+    rotY+=velX; rotX=Math.max(-.9,Math.min(.9,rotX+velY));
+    prevX=e.touches[0].clientX; prevY=e.touches[0].clientY;
+  }, { passive:false });
+  (function animate(){
+    requestAnimationFrame(animate);
+    if (!model) return;
+    if (autoSpin) { autoAngle+=.005; model.rotation.y=autoAngle; model.rotation.x=Math.sin(autoAngle*.4)*.05; }
+    else { if (!isDragging) { velX*=.93; velY*=.93; rotY+=velX; rotX=Math.max(-.9,Math.min(.9,rotX+velY)); } model.rotation.y=rotY; model.rotation.x=rotX; }
+    renderer.render(scene, camera);
+  })();
+  new ResizeObserver(() => { renderer.setSize(w(),h()); camera.aspect=w()/h(); camera.updateProjectionMatrix(); }).observe(container);
+  const v = {
+    scene, camera, modelRef: null,
+    setModel(m) { if (this.modelRef) { scene.remove(this.modelRef); } model=m; this.modelRef=m; autoAngle=0; autoSpin=true; rotX=rotY=0; },
+    clearModel() { if (this.modelRef) { scene.remove(this.modelRef); this.modelRef=null; model=null; } }
+  };
+  viewers[idx] = v;
+  return v;
+}
+function fitModel(obj, cam) {
+  const box = new THREE.Box3().setFromObject(obj);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  let dist = maxDim / (2 * Math.tan(cam.fov * Math.PI / 360)) * 1.5;
+  cam.position.set(0, 0, dist);
+  cam.near = dist/100; cam.far = dist*100;
+  cam.updateProjectionMatrix();
+  obj.position.set(-center.x, -center.y, -center.z);
+}
+function onModelLoaded(root, v, idx, url) {
+  if (url) URL.revokeObjectURL(url);
+  const box = new THREE.Box3().setFromObject(root);
+  const maxDim = Math.max(...box.getSize(new THREE.Vector3()).toArray());
+  if (maxDim > 500) root.scale.setScalar(.01);
+  else if (maxDim > 50) root.scale.setScalar(.1);
+  fitModel(root, v.camera);
+  v.setModel(root); v.scene.add(root);
+  document.getElementById('canvas-'  + idx).classList.add('active');
+  document.getElementById('drop-'    + idx).classList.add('hidden');
+  document.getElementById('hint-'    + idx).classList.add('active');
+  document.getElementById('remove-'  + idx).classList.add('active');
+  document.getElementById('loading-' + idx).classList.remove('active');
+}
+function loadModel(input, idx) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const ext = file.name.split('.').pop().toLowerCase();
+  const url = URL.createObjectURL(file);
+  document.getElementById('loading-' + idx).classList.add('active');
+  const v = initViewer(idx);
+  if (ext === 'fbx') {
+    new THREE.FBXLoader().load(url, root => onModelLoaded(root, v, idx, url), undefined, err => {
+      console.error(err); document.getElementById('loading-' + idx).classList.remove('active');
+      alert('Could not load FBX.');
+    });
+  } else {
+    new THREE.GLTFLoader().load(url, gltf => onModelLoaded(gltf.scene, v, idx, url), undefined, err => {
+      console.error(err); document.getElementById('loading-' + idx).classList.remove('active');
+      alert('Could not load model.');
+    });
+  }
+}
+function removeModel(idx) {
+  if (viewers[idx]) viewers[idx].clearModel();
+  document.getElementById('canvas-'  + idx).classList.remove('active');
+  document.getElementById('drop-'    + idx).classList.remove('hidden');
+  document.getElementById('hint-'    + idx).classList.remove('active');
+  document.getElementById('remove-'  + idx).classList.remove('active');
+}
+
+// ── Drag & Drop on viewers ────────────────────────────────────
+for (let i = 0; i < 3; i++) {
+  const dz = document.getElementById('drop-' + i);
+  const ct = document.getElementById('viewer-' + i);
+  if (!dz || !ct) continue;
+  ct.addEventListener('dragover', e => { e.preventDefault(); if (!dz.classList.contains('hidden')) dz.classList.add('dragging-over'); });
+  ct.addEventListener('dragleave', () => dz.classList.remove('dragging-over'));
+  ct.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('dragging-over');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['glb','gltf','fbx'].includes(ext)) { alert('Please drop a .fbx, .glb or .gltf file.'); return; }
+    loadModel({ files: [file] }, i);
+  });
+}
+</script>
+</body>
+</html>

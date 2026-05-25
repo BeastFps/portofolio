@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin Panel</title>
+<style>
+  :root{--bg:#0e0d0b;--surface:#161412;--border:#2a2620;--amber:#d4850a;--amber-dim:rgba(212,133,10,0.15);--text:#c8bfb0;--text-dim:rgba(200,191,176,0.45);--mono:'DM Mono','Courier New',monospace;--radius:6px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;min-height:100vh}
+  #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+  .login-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem}
+  .login-box h1{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);margin-bottom:2rem}
+  .field{margin-bottom:1rem}
+  .field label{display:block;font-size:.65rem;letter-spacing:.12em;color:var(--text-dim);margin-bottom:.4rem;text-transform:uppercase}
+  .field input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem .8rem;color:var(--text);font-family:var(--mono);font-size:.8rem;outline:none;transition:border-color .2s}
+  .field input:focus{border-color:var(--amber)}
+  .btn{width:100%;padding:.7rem;background:var(--amber);color:#000;border:none;border-radius:var(--radius);font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:opacity .2s}
+  .btn:hover{opacity:.85}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .error-msg{color:#e05c5c;font-size:.7rem;margin-top:.8rem;text-align:center}
+  #app{display:none}
+  .shell{display:flex;min-height:100vh}
+  .sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column}
+  .sidebar-logo{padding:0 1.2rem 1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);border-bottom:1px solid var(--border);margin-bottom:1rem}
+  .nav-item{display:flex;align-items:center;gap:.6rem;padding:.55rem 1.2rem;cursor:pointer;transition:background .15s;font-size:.7rem;letter-spacing:.08em;color:var(--text-dim);text-transform:uppercase;user-select:none;text-decoration:none}
+  .nav-item:hover{background:rgba(212,133,10,.07);color:var(--text)}
+  .nav-item.active{background:var(--amber-dim);color:var(--amber)}
+  .nav-item.home-link{color:rgba(212,133,10,.6);border-bottom:1px solid var(--border);margin-bottom:.5rem}
+  .nav-item.home-link:hover{color:var(--amber);background:rgba(212,133,10,.07)}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .3s}
+  .dot.filled{background:var(--amber)}
+  .sidebar-footer{padding:1rem 1.2rem 0;border-top:1px solid var(--border);margin-top:auto}
+  .logout-btn{background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;padding:.5rem .8rem;border-radius:var(--radius);cursor:pointer;width:100%;transition:all .2s}
+  .logout-btn:hover{border-color:var(--amber);color:var(--amber)}
+  .main{flex:1;padding:2.5rem;overflow-y:auto}
+  .section{display:none}
+  .section.active{display:block}
+  .section-title{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);margin-bottom:1.8rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem}
+  .card-title{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1rem}
+  .upload-zone{border:1px dashed var(--border);border-radius:var(--radius);padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;min-height:80px}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--amber);background:var(--amber-dim)}
+  .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2}
+  .upload-icon{font-size:1.5rem;margin-bottom:.5rem;opacity:.4}
+  .upload-label{font-size:.65rem;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase}
+  .upload-sub{font-size:.6rem;color:var(--text-dim);margin-top:.3rem;opacity:.6}
+  .gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem}
+  .gallery-slot{aspect-ratio:1;position:relative}
+  .gallery-slot .upload-zone{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .slot-preview{width:100%;height:100%;position:relative;border-radius:var(--radius);overflow:hidden}
+  .slot-preview img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border);display:block}
+  .slot-preview .remove-btn{position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:#e05c5c;border:none;border-radius:50%;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3}
+  .profile-preview-img{width:120px;height:120px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border);display:block}
+  .profile-preview-wrap{position:relative;display:inline-block;margin-bottom:1rem}
+  .profile-preview-wrap .remove-btn{position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:#e05c5c;border:none;border-radius:50%;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3}
+  .info-row{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.7rem}
+  .info-row:last-child{border-bottom:none}
+  .info-key{color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;font-size:.62rem}
+  .tag{display:inline-block;background:var(--amber-dim);color:var(--amber);border-radius:3px;padding:.15rem .4rem;font-size:.6rem;margin:.1rem}
+  .status-ok{color:#5cb85c}
+  .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--amber);color:var(--amber);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;padding:.6rem 1rem;border-radius:var(--radius);z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+  .toast.show{opacity:1}
+  .spinner{display:inline-block;width:10px;height:10px;border:2px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite;margin-right:.4rem}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .uploading{opacity:.6;pointer-events:none}
+</style>
+</head>
+<body>
+
+<!-- Load api.js FIRST — provides API and Auth globals -->
+<script src="api.js"></script>
+
+<div class="toast" id="toast"></div>
+
+<!-- ─── LOGIN ─────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>Portfolio Admin</h1>
+    <div class="field"><label>Email</label><input id="login-email" type="email" placeholder="rajputsahilsom@gmail.com"/></div>
+    <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="••••••••"/></div>
+    <button class="btn" id="login-btn" onclick="doLogin()">Login</button>
+    <div class="error-msg" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ─── APP ───────────────────────────────────────────── -->
+<div id="app">
+  <div class="shell">
+    <nav class="sidebar">
+      <div class="sidebar-logo">Admin Panel</div>
+
+      <a class="nav-item home-link" href="portofolio.html" target="_blank">🏠 Home</a>
+
+      <div class="nav-item active" onclick="showSection('profile')" id="nav-profile">
+        <span class="dot" id="dot-profile"></span> Profile
+      </div>
+
+      <div style="padding:.4rem 1.2rem;font-size:.55rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-top:.5rem;">Projects</div>
+      <div id="project-nav-list"></div>
+
+      <div class="nav-item" onclick="showSection('settings')" id="nav-settings">
+        <span class="dot"></span> Settings
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="doLogout()">Logout</button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <!-- PROFILE -->
+      <div class="section active" id="section-profile">
+        <div class="section-title">Profile Photo</div>
+        <div class="card">
+          <div class="card-title">Hero / Profile Image</div>
+          <div id="profile-preview-area"></div>
+          <div class="upload-zone" id="profile-zone">
+            <input type="file" accept="image/*" id="profile-input"/>
+            <div class="upload-icon">⬆</div>
+            <div class="upload-label">Upload Photo</div>
+            <div class="upload-sub">JPG · PNG · WEBP</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECTS (generated) -->
+      <div id="project-sections"></div>
+
+      <!-- SETTINGS -->
+      <div class="section" id="section-settings">
+        <div class="section-title">Settings</div>
+        <div class="card">
+          <div class="card-title">Session</div>
+          <div class="info-row"><span class="info-key">Backend</span><span class="status-ok">✓ Railway</span></div>
+          <div class="info-row"><span class="info-key">Storage</span><span class="status-ok">✓ MongoDB + CDN</span></div>
+          <div class="info-row"><span class="info-key">Logged in as</span><span id="session-email">—</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Manage Projects</div>
+          <div id="project-manager"></div>
+          <div style="display:flex;gap:.8rem;margin-top:1rem;">
+            <input id="new-project-name" placeholder="Project name…"
+              style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem .7rem;color:var(--text);font-family:var(--mono);font-size:.75rem;flex:1;outline:none;"/>
+            <button class="btn" style="width:auto;padding:.5rem 1.2rem;" onclick="addProject()">Add</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  State — populated from the backend after login
+// ════════════════════════════════════════════════════════
+let PROJECTS = [];    // [ { _id, name, order } ]
+let PHOTOS   = {};    // { category: { _id, url } }  e.g. 'profile-main', 'proj-0-img-2'
+
+// ════════════════════════════════════════════════════════
+//  Toast
+// ════════════════════════════════════════════════════════
+let _toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ════════════════════════════════════════════════════════
+//  Auth
+// ════════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const err   = document.getElementById('login-err');
+  const btn   = document.getElementById('login-btn');
+  err.textContent = '';
+
+  if (!email || !pass) { err.textContent = 'Enter email and password.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Logging in…';
+
+  try {
+    await API.login(email, pass);
+    // store email for display
+    localStorage.setItem('admin_email', email);
+    startApp();
+  } catch (e) {
+    err.textContent = e.message || 'Login failed.';
+    btn.disabled = false;
+    btn.textContent = 'Login';
+  }
+}
+
+function doLogout() {
+  Auth.clearToken();
+  localStorage.removeItem('admin_email');
+  PROJECTS = [];
+  PHOTOS = {};
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'Login';
+}
+
+// Auto-login if token exists
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  if (Auth.isLoggedIn()) startApp();
+});
+
+// ════════════════════════════════════════════════════════
+//  Bootstrap — load data then build UI
+// ════════════════════════════════════════════════════════
+async function startApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  const em = document.getElementById('session-email');
+  if (em) em.textContent = localStorage.getItem('admin_email') || '—';
+
+  try {
+    await Promise.all([loadProjects(), loadPhotos()]);
+  } catch(e) {
+    // token might be expired
+    if (e.message && e.message.includes('401')) { doLogout(); return; }
+    showToast('Load error: ' + e.message);
+  }
+
+  buildAll();
+  renderAllPreviews();
+}
+
+// ─── Load projects from backend ────────────────────────
+async function loadProjects() {
+  const list = await API.getProjects();
+  // Sort by order field if present
+  PROJECTS = list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+}
+
+// ─── Load all photos from backend into PHOTOS map ──────
+async function loadPhotos() {
+  const list = await API.getPhotos();
+  PHOTOS = {};
+  list.forEach(p => { PHOTOS[p.category] = p; });
+}
+
+// ════════════════════════════════════════════════════════
+//  Build UI
+// ════════════════════════════════════════════════════════
+function buildAll() { buildNav(); buildSections(); renderProjectManager(); }
+
+function buildNav() {
+  const list = document.getElementById('project-nav-list');
+  list.innerHTML = '';
+  PROJECTS.forEach((proj, i) => {
+    const div = document.createElement('div');
+    div.className = 'nav-item';
+    div.id = 'nav-proj-' + i;
+    div.innerHTML = `<span class="dot" id="dot-proj-${i}"></span> ${escHtml(proj.name)}`;
+    div.addEventListener('click', () => showSection('proj-' + i));
+    list.appendChild(div);
+  });
+}
+
+function buildSections() {
+  const container = document.getElementById('project-sections');
+  container.innerHTML = '';
+
+  PROJECTS.forEach((proj, i) => {
+    const sec = document.createElement('div');
+    sec.className = 'section';
+    sec.id = 'section-proj-' + i;
+
+    const title = document.createElement('div');
+    title.className = 'section-title';
+    title.textContent = proj.name;
+    sec.appendChild(title);
+
+    // Gallery card
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = '<div class="card-title">Gallery Images (up to 4)</div>';
+
+    const grid = document.createElement('div');
+    grid.className = 'gallery-grid';
+    grid.id = 'gallery-grid-' + i;
+    for (let j = 0; j < 4; j++) {
+      const slot = document.createElement('div');
+      slot.className = 'gallery-slot';
+      slot.id = 'slot-' + i + '-' + j;
+      slot.appendChild(makeUploadZone(i, j));
+      grid.appendChild(slot);
+    }
+    card.appendChild(grid);
+    sec.appendChild(card);
+
+    // Model card (display-only for now)
+    const mcard = document.createElement('div');
+    mcard.className = 'card';
+    mcard.innerHTML = `
+      <div class="card-title">3D Model (FBX / GLB / GLTF)</div>
+      <div class="upload-zone" id="model-zone-${i}">
+        <input type="file" accept=".fbx,.glb,.gltf" id="model-input-${i}"/>
+        <div class="upload-icon">⬆</div>
+        <div class="upload-label">Drop Model</div>
+        <div class="upload-sub">FBX · GLB · GLTF</div>
+      </div>
+      <div id="model-name-${i}" style="font-size:.65rem;color:var(--text-dim);margin-top:.5rem;"></div>`;
+    sec.appendChild(mcard);
+    container.appendChild(sec);
+
+    document.getElementById('model-input-' + i).addEventListener('change', function() {
+      if (this.files[0])
+        document.getElementById('model-name-' + i).innerHTML = `<span class="tag">✓ ${this.files[0].name}</span>`;
+    });
+  });
+
+  // Profile input
+  const pi = document.getElementById('profile-input');
+  if (pi) {
+    const fresh = pi.cloneNode(true);
+    pi.parentNode.replaceChild(fresh, pi);
+    fresh.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        uploadPhoto(this.files[0], 'profile-main');
+        this.value = '';
+      }
+    });
+  }
+}
+
+function makeUploadZone(projIdx, slotIdx) {
+  const zone = document.createElement('div');
+  zone.className = 'upload-zone';
+  zone.style.cssText = 'height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+
+  const icon = document.createElement('div');
+  icon.className = 'upload-icon';
+  icon.style.fontSize = '.9rem';
+  icon.textContent = '+';
+
+  const lbl = document.createElement('div');
+  lbl.className = 'upload-label';
+  lbl.style.fontSize = '.55rem';
+  lbl.textContent = String(slotIdx + 1);
+
+  zone.appendChild(input);
+  zone.appendChild(icon);
+  zone.appendChild(lbl);
+
+  input.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      uploadPhoto(this.files[0], `proj-${projIdx}-img-${slotIdx}`);
+      this.value = '';
+    }
+  });
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f) uploadPhoto(f, `proj-${projIdx}-img-${slotIdx}`);
+  });
+
+  return zone;
+}
+
+// ════════════════════════════════════════════════════════
+//  Upload → Railway backend
+// ════════════════════════════════════════════════════════
+async function uploadPhoto(file, category) {
+  showToast('Uploading…');
+
+  // Show spinner in the right slot
+  const el = getSlotOrZone(category);
+  if (el) el.classList.add('uploading');
+
+  try {
+    const photo = await API.uploadPhoto(file, category);
+    // photo = { _id, url, category }
+    PHOTOS[category] = photo;
+    renderPreview(category, photo.url);
+    updateDot(category);
+    showToast('Saved ✓');
+  } catch(err) {
+    showToast('Upload failed: ' + err.message);
+    console.error('[admin] upload error:', err);
+  } finally {
+    if (el) el.classList.remove('uploading');
+  }
+}
+
+async function deletePhoto(category) {
+  const photo = PHOTOS[category];
+  if (!photo) return;
+
+  try {
+    await API.deletePhoto(photo._id);
+    delete PHOTOS[category];
+    updateDot(category);
+    showToast('Removed');
+  } catch(e) {
+    showToast('Delete failed: ' + e.message);
+    return;
+  }
+
+  // Rebuild the slot UI
+  if (category === 'profile-main') {
+    document.getElementById('profile-preview-area').innerHTML = '';
+    const zone = document.getElementById('profile-zone');
+    if (zone) zone.style.display = '';
+    return;
+  }
+
+  const m = category.match(/^proj-(\d+)-img-(\d+)$/);
+  if (m) {
+    const slot = document.getElementById('slot-' + m[1] + '-' + m[2]);
+    if (slot) { slot.innerHTML = ''; slot.appendChild(makeUploadZone(+m[1], +m[2])); }
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  Render previews from PHOTOS map
+// ════════════════════════════════════════════════════════
+function renderAllPreviews() {
+  // Profile
+  const profilePhoto = PHOTOS['profile-main'];
+  if (profilePhoto) renderPreview('profile-main', profilePhoto.url);
+  else {
+    document.getElementById('profile-preview-area').innerHTML = '';
+    const zone = document.getElementById('profile-zone');
+    if (zone) zone.style.display = '';
+  }
+
+  // Gallery images
+  PROJECTS.forEach((_, i) => {
+    for (let j = 0; j < 4; j++) {
+      const cat = `proj-${i}-img-${j}`;
+      const photo = PHOTOS[cat];
+      if (photo) renderPreview(cat, photo.url);
+    }
+  });
+
+  restoreAllDots();
+}
+
+function renderPreview(category, url) {
+  if (category === 'profile-main') {
+    const area = document.getElementById('profile-preview-area');
+    if (!area) return;
+    area.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'profile-preview-wrap';
+    const img = document.createElement('img');
+    img.src = url;
+    img.className = 'profile-preview-img';
+    const btn = document.createElement('button');
+    btn.className = 'remove-btn';
+    btn.textContent = '×';
+    btn.addEventListener('click', () => deletePhoto('profile-main'));
+    wrap.appendChild(img);
+    wrap.appendChild(btn);
+    area.appendChild(wrap);
+    const zone = document.getElementById('profile-zone');
+    if (zone) zone.style.display = 'none';
+    return;
+  }
+
+  const m = category.match(/^proj-(\d+)-img-(\d+)$/);
+  if (!m) return;
+  const slot = document.getElementById('slot-' + m[1] + '-' + m[2]);
+  if (!slot) return;
+  slot.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'slot-preview';
+  const img = document.createElement('img');
+  img.src = url;
+  const btn = document.createElement('button');
+  btn.className = 'remove-btn';
+  btn.textContent = '×';
+  btn.addEventListener('click', () => deletePhoto(category));
+  wrap.appendChild(img);
+  wrap.appendChild(btn);
+  slot.appendChild(wrap);
+}
+
+// ════════════════════════════════════════════════════════
+//  Sidebar dots
+// ════════════════════════════════════════════════════════
+function updateDot(category) {
+  if (category === 'profile-main') {
+    const dot = document.getElementById('dot-profile');
+    if (dot) dot.classList.toggle('filled', !!PHOTOS['profile-main']);
+    return;
+  }
+  const m = category.match(/^proj-(\d+)/);
+  if (!m) return;
+  const pi = m[1];
+  const dot = document.getElementById('dot-proj-' + pi);
+  if (!dot) return;
+  let has = false;
+  for (let j = 0; j < 4; j++) {
+    if (PHOTOS[`proj-${pi}-img-${j}`]) { has = true; break; }
+  }
+  dot.classList.toggle('filled', has);
+}
+
+function restoreAllDots() {
+  updateDot('profile-main');
+  PROJECTS.forEach((_, i) => updateDot(`proj-${i}-img-0`));
+}
+
+// ════════════════════════════════════════════════════════
+//  Project management
+// ════════════════════════════════════════════════════════
+function renderProjectManager() {
+  const el = document.getElementById('project-manager');
+  if (!el) return;
+  el.innerHTML = PROJECTS.map((proj, i) => `
+    <div class="info-row">
+      <span class="info-key">${i+1}. ${escHtml(proj.name)}</span>
+      <button data-id="${escHtml(proj._id)}" class="rm-proj-btn"
+        style="background:none;border:1px solid #444;color:var(--text-dim);font-family:var(--mono);font-size:.6rem;padding:.2rem .5rem;border-radius:3px;cursor:pointer;">
+        Remove
+      </button>
+    </div>`).join('');
+
+  el.querySelectorAll('.rm-proj-btn').forEach(btn => {
+    btn.addEventListener('click', () => removeProject(btn.dataset.id));
+  });
+}
+
+async function addProject() {
+  const input = document.getElementById('new-project-name');
+  const name = input.value.trim();
+  if (!name) return;
+
+  try {
+    const proj = await API.createProject(name);
+    PROJECTS.push(proj);
+    input.value = '';
+    buildAll();
+    renderAllPreviews();
+    showToast('Project added ✓');
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
+async function removeProject(projectId) {
+  try {
+    await API.deleteProject(projectId);
+    PROJECTS = PROJECTS.filter(p => p._id !== projectId);
+    buildAll();
+    renderAllPreviews();
+    showToast('Project removed');
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  Nav
+// ════════════════════════════════════════════════════════
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item:not(.home-link)').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById('section-' + id);
+  if (sec) sec.classList.add('active');
+  const nav = document.getElementById('nav-' + id);
+  if (nav) nav.classList.add('active');
+}
+
+// ════════════════════════════════════════════════════════
+//  Helpers
+// ════════════════════════════════════════════════════════
+function getSlotOrZone(category) {
+  if (category === 'profile-main') return document.getElementById('profile-zone');
+  const m = category.match(/^proj-(\d+)-img-(\d+)$/);
+  if (m) return document.getElementById('slot-' + m[1] + '-' + m[2]);
+  return null;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
