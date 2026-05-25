@@ -91,11 +91,12 @@ router.post('/upload', auth, upload.fields([
 });
 
 // DELETE /api/projects/:id
+// DELETE /api/projects/:id
 router.delete('/:id', auth, async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: 'Project not found' });
-    await deleteFromBunny(project.fileName);
+    if (project.fileName) await deleteFromBunny(project.fileName).catch(() => {});
     if (project.thumbnailUrl) {
       const thumbFileName = project.thumbnailUrl.replace(process.env.BUNNY_CDN_URL + '/', '');
       await deleteFromBunny(thumbFileName).catch(() => {});
